@@ -1,0 +1,13 @@
+{
+  "target_name": "Synthetic-EXO-1",
+  "ra": "14:12:37",
+  "dec": "+04:03:36",
+  "observer": "Observador Amador Exemplo",
+  "telescope": "Reflector 30 cm f/5",
+  "camera": "CCD MockCam 2048x2048",
+  "filter": "V",
+  "exposure_s": 120,
+  "time_system": "BJD_TDB (simulated)",
+  "creation_date_utc": "2025-10-19T20:00:00Z",
+  "notes": "Dados simulados para exemplo did\u00e1tico do TCC: curva crua instrumental com tend\u00eancia e ru\u00eddo."
+}
