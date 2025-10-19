@@ -1,121 +1,182 @@
 import { useState } from "react";
 import "./App.css";
-import { RegisterExoplanetModal } from "./components/register-exoplanet-modal";
 import { Navigation } from "./components/navigation";
-import { HomePage } from "./components/pages/home-page";
-import { CatalogPage } from "./components/pages/catalog-page";
+import { AnalyzePage } from "./components/pages/analyze-page";
+import { HistoryPage } from "./components/pages/history-page";
 import { ForumPage } from "./components/pages/forum-page";
-import { ProfilePage } from "./components/pages/profile-page";
-
-interface Exoplanet {
-  id: number;
-  name: string;
-  type: string;
-  star: string;
-  distance: string;
-  habitability: string;
-  image: string;
-  description: string;
-}
-
-interface ForumTopic {
-  id: number;
-  title: string;
-  author: string;
-  replies: number;
-  lastActivity: string;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { LogIn } from "lucide-react";
+import { SavedAnalysis, ForumPost } from "./app/types";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<
-    "home" | "catalog" | "forum" | "profile"
-  >("home");
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-
-  const rockyPlanetImage = "/rocky-exoplanet.jpg";
-  const gasGiantImage = "/gas-giant-exoplanet.jpg";
-
-  const exoplanets: Exoplanet[] = [
+  const [activeTab, setActiveTab] = useState<"analyze" | "history" | "forum">(
+    "analyze"
+  );
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginModal, setShowLoginModal] = useState(true);
+  const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);
+  const [forumPosts, setForumPosts] = useState<ForumPost[]>([
     {
       id: 1,
-      name: "Kepler-442b",
-      type: "Super Terra",
-      star: "Kepler-442",
-      distance: "1,206 anos-luz",
-      habitability: "Zona Habitável",
-      image: rockyPlanetImage,
+      author: "João Silva",
+      title: "🪐 Possível exoplanet detectado em Crux",
       description:
-        "Um exoplaneta rochoso localizado na zona habitável de sua estrela.",
+        "Curva com padrão muito interessante, detectei 3 dips significativos",
+      confidence: 87,
+      isExoplanet: true,
+      votes: 12,
+      crossRefData: {
+        catalog: "TESS",
+        match: "TIC 123456",
+        distance: "0.02°",
+      },
+      timestamp: "2 dias atrás",
+      coordinate: "RA 12:30:45, DEC -45:30:00",
     },
     {
       id: 2,
-      name: "HD 209458b",
-      type: "Gigante Gasoso",
-      star: "HD 209458",
-      distance: "159 anos-luz",
-      habitability: "Não Habitável",
-      image: gasGiantImage,
-      description: "Um dos primeiros exoplanetas descobertos em trânsito.",
-    },
-    {
-      id: 3,
-      name: "TRAPPIST-1e",
-      type: "Terrestre",
-      star: "TRAPPIST-1",
-      distance: "40 anos-luz",
-      habitability: "Potencialmente Habitável",
-      image: rockyPlanetImage,
+      author: "Maria Santos",
+      title: "⭐ Análise de variabilidade estelar",
       description:
-        "Parte do famoso sistema TRAPPIST-1 com sete planetas terrestres.",
+        "Padrão típico de estrela variável, sem sinais de trânsito planetário",
+      confidence: 45,
+      isExoplanet: false,
+      votes: 5,
+      crossRefData: {
+        catalog: "Gaia",
+        match: "Gaia DR3 123456",
+        distance: "0.01°",
+      },
+      timestamp: "1 dia atrás",
+      coordinate: "RA 18:45:30, DEC +30:15:00",
     },
-  ];
+  ]);
 
-  const forumTopics: ForumTopic[] = [
-    {
-      id: 1,
-      title: "Descoberta de água em Kepler-442b",
-      author: "Dr. Silva",
-      replies: 23,
-      lastActivity: "2 horas atrás",
-    },
-    {
-      id: 2,
-      title: "Métodos de detecção de exoplanetas",
-      author: "AstroFan2024",
-      replies: 15,
-      lastActivity: "5 horas atrás",
-    },
-    {
-      id: 3,
-      title: "Sistema TRAPPIST-1: Análise completa",
-      author: "ExoPlanetHunter",
-      replies: 42,
-      lastActivity: "1 dia atrás",
-    },
-  ];
+  const handleLogin = () => {
+    if (loginUsername.trim()) {
+      setUsername(loginUsername);
+      setIsLoggedIn(true);
+      setShowLoginModal(false);
+      setLoginUsername("");
+      setLoginPassword("");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUsername("");
+    setActiveTab("analyze");
+    setSavedAnalyses([]);
+    setShowLoginModal(true);
+  };
+
+  const handleSaveAnalysis = (analysis: SavedAnalysis) => {
+    setSavedAnalyses([...savedAnalyses, analysis]);
+
+    // Se compartilhado, adicionar ao forum
+    if (!analysis.isPrivate) {
+      const forumPost: ForumPost = {
+        id: forumPosts.length + 1,
+        author: username,
+        title: `${analysis.result.isExoplanet ? "🪐" : "⭐"} ${
+          analysis.description || analysis.filename
+        }`,
+        description: analysis.description,
+        confidence: analysis.result.confidence,
+        isExoplanet: analysis.result.isExoplanet,
+        votes: 0,
+        crossRefData: analysis.result.crossRef,
+        timestamp: "agora",
+        coordinate: analysis.coordinate,
+      };
+      setForumPosts([forumPost, ...forumPosts]);
+    }
+  };
 
   return (
     <div className="min-h-screen space-bg text-white">
       <Navigation
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onRegister={() => setShowRegisterModal(true)}
+        isLoggedIn={isLoggedIn}
+        username={username}
+        onLogout={handleLogout}
       />
 
-      {activeTab === "home" && (
-        <HomePage
-          exoplanets={exoplanets}
-          onRegister={() => setShowRegisterModal(true)}
-        />
+      {/* Login Modal */}
+      <Dialog
+        open={showLoginModal && !isLoggedIn}
+        onOpenChange={setShowLoginModal}
+      >
+        <DialogContent className="glass-card border-white/10 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white text-2xl">
+              Bem-vindo ao ExoBrasilNet
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-6">
+            <p className="text-white/60">
+              Faça login para começar a analisar curvas de luz
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-white text-sm mb-2 block">Usuário</label>
+                <Input
+                  placeholder="Digite seu usuário"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+              </div>
+
+              <div>
+                <label className="text-white text-sm mb-2 block">Senha</label>
+                <Input
+                  type="password"
+                  placeholder="Digite sua senha"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+              </div>
+            </div>
+
+            <Button onClick={handleLogin} className="w-full btn-primary">
+              <LogIn className="h-4 w-4 mr-2" />
+              Entrar
+            </Button>
+
+            <p className="text-white/60 text-sm text-center">
+              Primeira vez? Use qualquer usuário para criar sua conta
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Main Content */}
+      {isLoggedIn && (
+        <>
+          {activeTab === "analyze" && (
+            <AnalyzePage onSaveAnalysis={handleSaveAnalysis} />
+          )}
+          {activeTab === "history" && <HistoryPage analyses={savedAnalyses} />}
+          {activeTab === "forum" && <ForumPage posts={forumPosts} />}
+        </>
       )}
-      {activeTab === "catalog" && <CatalogPage exoplanets={exoplanets} />}
-      {activeTab === "forum" && <ForumPage topics={forumTopics} />}
-      {activeTab === "profile" && <ProfilePage exoplanets={exoplanets} />}
-
-      <RegisterExoplanetModal
-        isOpen={showRegisterModal}
-        onClose={() => setShowRegisterModal(false)}
-      />
     </div>
   );
 }
