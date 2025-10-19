@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
+import { HeroSection } from "./components/hero-section";
 import { SavedAnalysis, ForumPost } from "./app/types";
 
 export default function App() {
@@ -23,7 +24,8 @@ export default function App() {
   const [username, setUsername] = useState("");
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [showLoginModal, setShowLoginModal] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showHero, setShowHero] = useState(true);
   const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);
   const [forumPosts, setForumPosts] = useState<ForumPost[]>([
     {
@@ -67,6 +69,7 @@ export default function App() {
       setUsername(loginUsername);
       setIsLoggedIn(true);
       setShowLoginModal(false);
+      setShowHero(false);
       setLoginUsername("");
       setLoginPassword("");
     }
@@ -77,6 +80,12 @@ export default function App() {
     setUsername("");
     setActiveTab("analyze");
     setSavedAnalyses([]);
+    setShowHero(true);
+    setShowLoginModal(false);
+  };
+
+  const handleGetStarted = () => {
+    setShowHero(false);
     setShowLoginModal(true);
   };
 
@@ -105,13 +114,28 @@ export default function App() {
 
   return (
     <div className="min-h-screen space-bg text-white">
-      <Navigation
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isLoggedIn={isLoggedIn}
-        username={username}
-        onLogout={handleLogout}
-      />
+      {!isLoggedIn && showHero && (
+        <HeroSection onGetStarted={handleGetStarted} />
+      )}
+
+      {isLoggedIn && (
+        <>
+          <Navigation
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isLoggedIn={isLoggedIn}
+            username={username}
+            onLogout={handleLogout}
+          />
+
+          {/* Main Content */}
+          {activeTab === "analyze" && (
+            <AnalyzePage onSaveAnalysis={handleSaveAnalysis} />
+          )}
+          {activeTab === "history" && <HistoryPage analyses={savedAnalyses} />}
+          {activeTab === "forum" && <ForumPage posts={forumPosts} />}
+        </>
+      )}
 
       {/* Login Modal */}
       <Dialog
@@ -166,17 +190,6 @@ export default function App() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Main Content */}
-      {isLoggedIn && (
-        <>
-          {activeTab === "analyze" && (
-            <AnalyzePage onSaveAnalysis={handleSaveAnalysis} />
-          )}
-          {activeTab === "history" && <HistoryPage analyses={savedAnalyses} />}
-          {activeTab === "forum" && <ForumPage posts={forumPosts} />}
-        </>
-      )}
     </div>
   );
 }
